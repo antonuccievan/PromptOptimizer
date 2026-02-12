@@ -35,7 +35,7 @@
     }
 
     .app {
-      width: min(1050px, 100%);
+      width: min(1180px, 100%);
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: 24px;
@@ -135,9 +135,21 @@
 
     .controls {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
       margin-top: 8px;
+    }
+
+    .field-group {
+      min-width: 0;
+    }
+
+    .field-group label {
+      margin-top: 0;
+    }
+
+    .is-hidden {
+      display: none;
     }
 
     button {
@@ -214,7 +226,7 @@
         <textarea id="rawPrompt" placeholder="Example: Write me a LinkedIn post about launching a productivity app."></textarea>
 
         <div class="controls">
-          <div>
+          <div class="field-group">
             <label for="goal">Output goal</label>
             <select id="goal">
               <option value="explain">Explain / Educate</option>
@@ -226,7 +238,7 @@
             </select>
           </div>
 
-          <div>
+          <div class="field-group">
             <label for="tone">Tone</label>
             <select id="tone">
               <option value="professional">Professional</option>
@@ -238,12 +250,14 @@
           </div>
         </div>
 
-        <label for="codexDepth">Codex optimization depth</label>
-        <select id="codexDepth">
-          <option value="standard">Standard</option>
-          <option value="strict">Strict (tests + edge cases)</option>
-          <option value="ship">Ship-ready (implementation + validation + PR checklist)</option>
-        </select>
+        <div id="codexDepthGroup">
+          <label for="codexDepth">Codex optimization depth</label>
+          <select id="codexDepth">
+            <option value="standard">Standard</option>
+            <option value="strict">Strict (tests + edge cases)</option>
+            <option value="ship">Ship-ready (implementation + validation + PR checklist)</option>
+          </select>
+        </div>
 
         <label for="constraints">Add constraints (optional)</label>
         <input id="constraints" placeholder="Example: Under 120 words, include 3 bullet points, include CTA." />
@@ -271,6 +285,7 @@
     const optimizedPromptEl = document.getElementById('optimizedPrompt');
     const scoreTextEl = document.getElementById('scoreText');
     const tipsEl = document.getElementById('tips');
+    const codexDepthGroupEl = document.getElementById('codexDepthGroup');
 
     const goalHints = {
       explain: 'Use simple language and include examples where useful.',
@@ -286,6 +301,11 @@
       strict: 'Require automated tests/checks, failure handling, and explicit edge-case coverage.',
       ship: 'Require a complete delivery workflow: implementation, validation, commit quality, and PR summary.'
     };
+
+    function syncCodexDepthVisibility() {
+      const isCodexGoal = goalEl.value === 'codex';
+      codexDepthGroupEl.classList.toggle('is-hidden', !isCodexGoal);
+    }
 
     function scorePrompt(text, constraints) {
       let score = 35;
@@ -342,6 +362,8 @@
 
     document.getElementById('optimizeBtn').addEventListener('click', optimizePrompt);
 
+    goalEl.addEventListener('change', syncCodexDepthVisibility);
+
     document.getElementById('clearBtn').addEventListener('click', () => {
       rawPromptEl.value = '';
       constraintsEl.value = '';
@@ -351,7 +373,10 @@
       optimizedPromptEl.innerHTML = 'Your optimized prompt will appear here after you click <strong>Optimize Prompt</strong>.';
       scoreTextEl.textContent = 'Prompt quality score: —';
       tipsEl.innerHTML = '';
+      syncCodexDepthVisibility();
     });
+
+    syncCodexDepthVisibility();
   </script>
 </body>
 </html>
