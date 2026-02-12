@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Prompt Optimizer</title>
+  <style>
+    :root {
+      --bg: #070b1a;
+      --card: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.2);
+      --text: #f4f7ff;
+      --muted: #b9c1dd;
+      --primary: #7c5cff;
+      --secondary: #23d8c3;
+      --danger: #ff5c8a;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 20%, #3f2b96 0%, transparent 40%),
+        radial-gradient(circle at 85% 10%, #1bffff66 0%, transparent 30%),
+        radial-gradient(circle at 80% 80%, #ff4d9d40 0%, transparent 30%),
+        var(--bg);
+      display: grid;
+      place-items: center;
+      padding: 32px 16px;
+    }
+
+    .app {
+      width: min(1050px, 100%);
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2vw, 2rem);
+      letter-spacing: 0.4px;
+    }
+
+    .title p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 54ch;
+    }
+
+    .badge {
+      background: linear-gradient(135deg, var(--primary), #5f9bff);
+      border: none;
+      border-radius: 999px;
+      padding: 10px 14px;
+      color: white;
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .panel {
+      background: rgba(12, 18, 36, 0.9);
+      padding: 24px;
+    }
+
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 1.1rem;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 8px;
+      color: #d7def8;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    textarea, select, input {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.06);
+      color: white;
+      border-radius: 12px;
+      padding: 12px;
+      font: inherit;
+      outline: none;
+      transition: 0.2s ease;
+    }
+
+    textarea { min-height: 140px; resize: vertical; }
+
+    textarea:focus, select:focus, input:focus {
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 3px rgba(35, 216, 195, 0.2);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    button {
+      margin-top: 16px;
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 13px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font: inherit;
+      transition: transform 0.12s ease, opacity 0.2s ease;
+    }
+
+    #optimizeBtn {
+      background: linear-gradient(135deg, var(--secondary), #7de9de);
+      color: #032b2c;
+    }
+
+    #clearBtn {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      margin-top: 10px;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .result {
+      min-height: 220px;
+      white-space: pre-wrap;
+      padding: 16px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #f5f8ff;
+      line-height: 1.5;
+    }
+
+    .hint {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .tips {
+      margin-top: 18px;
+      padding-left: 20px;
+      color: #dbe3ff;
+      font-size: 0.9rem;
+    }
+
+    .tips li { margin: 8px 0; }
+
+    @media (max-width: 920px) {
+      .content { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div class="title">
+        <h1>AI Prompt Optimizer</h1>
+        <p>Turn rough ideas into clear, context-rich prompts that AI systems can understand and execute better.</p>
+      </div>
+      <span class="badge">Prompt Engineering Assistant</span>
+    </header>
+
+    <section class="content">
+      <section class="panel">
+        <h2>Describe what you want</h2>
+        <label for="rawPrompt">Original Prompt</label>
+        <textarea id="rawPrompt" placeholder="Example: Write me a LinkedIn post about launching a productivity app."></textarea>
+
+        <div class="controls">
+          <div>
+            <label for="goal">Output goal</label>
+            <select id="goal">
+              <option value="explain">Explain / Educate</option>
+              <option value="creative">Creative Writing</option>
+              <option value="marketing">Marketing Copy</option>
+              <option value="code">Code / Technical</option>
+              <option value="analysis">Analysis / Strategy</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="tone">Tone</label>
+            <select id="tone">
+              <option value="professional">Professional</option>
+              <option value="friendly">Friendly</option>
+              <option value="confident">Confident</option>
+              <option value="concise">Concise</option>
+              <option value="persuasive">Persuasive</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="constraints">Add constraints (optional)</label>
+        <input id="constraints" placeholder="Example: Under 120 words, include 3 bullet points, include CTA." />
+
+        <button id="optimizeBtn">Optimize Prompt</button>
+        <button id="clearBtn" type="button">Clear</button>
+      </section>
+
+      <section class="panel">
+        <h2>Suggested Optimized Prompt</h2>
+        <div id="optimizedPrompt" class="result">Your optimized prompt will appear here after you click <strong>Optimize Prompt</strong>.</div>
+        <p class="hint" id="scoreText">Prompt quality score: —</p>
+
+        <ul class="tips" id="tips"></ul>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const rawPromptEl = document.getElementById('rawPrompt');
+    const goalEl = document.getElementById('goal');
+    const toneEl = document.getElementById('tone');
+    const constraintsEl = document.getElementById('constraints');
+    const optimizedPromptEl = document.getElementById('optimizedPrompt');
+    const scoreTextEl = document.getElementById('scoreText');
+    const tipsEl = document.getElementById('tips');
+
+    const goalHints = {
+      explain: 'Use simple language and include examples where useful.',
+      creative: 'Make the writing vivid with specific imagery and narrative flow.',
+      marketing: 'Focus on audience pain points, value proposition, and a strong CTA.',
+      code: 'Provide structured output with assumptions, edge cases, and implementation details.',
+      analysis: 'Break down reasoning step-by-step and include actionable recommendations.'
+    };
+
+    function scorePrompt(text, constraints) {
+      let score = 35;
+      if (text.length > 40) score += 15;
+      if (/for|audience|target|users/i.test(text)) score += 15;
+      if (/format|bullet|table|json|steps|outline/i.test(text + ' ' + constraints)) score += 15;
+      if (/tone|style|voice/i.test(text)) score += 10;
+      if (constraints.trim().length > 0) score += 10;
+      return Math.min(score, 100);
+    }
+
+    function optimizePrompt() {
+      const rawPrompt = rawPromptEl.value.trim();
+      const goal = goalEl.value;
+      const tone = toneEl.value;
+      const constraints = constraintsEl.value.trim();
+
+      if (!rawPrompt) {
+        optimizedPromptEl.textContent = 'Please provide your original prompt first so it can be optimized.';
+        scoreTextEl.textContent = 'Prompt quality score: 0/100';
+        tipsEl.innerHTML = '<li>Start with your core objective in one sentence.</li>';
+        return;
+      }
+
+      const optimized = `You are an expert AI assistant.\n\nTask:\n${rawPrompt}\n\nRequirements:\n- Primary goal: ${goal.replace('/', ' & ')}\n- Tone: ${tone}\n- ${goalHints[goal]}${constraints ? `\n- Additional constraints: ${constraints}` : ''}\n\nResponse format:\n1) Brief approach\n2) Final output\n3) Quality check against the requirements\n\nIf key information is missing, ask up to 3 concise clarifying questions before producing the final answer.`;
+
+      optimizedPromptEl.textContent = optimized;
+
+      const score = scorePrompt(rawPrompt, constraints);
+      scoreTextEl.textContent = `Prompt quality score: ${score}/100`;
+
+      const tips = [
+        'Be explicit about the audience, context, and desired outcome.',
+        'Define constraints such as length, structure, or forbidden content.',
+        'Ask for self-checks so the model verifies quality before finalizing.'
+      ];
+
+      if (score < 70) {
+        tips.unshift('Your original prompt is broad. Add more context and a concrete deliverable.');
+      }
+
+      tipsEl.innerHTML = tips.map(tip => `<li>${tip}</li>`).join('');
+    }
+
+    document.getElementById('optimizeBtn').addEventListener('click', optimizePrompt);
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      rawPromptEl.value = '';
+      constraintsEl.value = '';
+      goalEl.value = 'explain';
+      toneEl.value = 'professional';
+      optimizedPromptEl.innerHTML = 'Your optimized prompt will appear here after you click <strong>Optimize Prompt</strong>.';
+      scoreTextEl.textContent = 'Prompt quality score: —';
+      tipsEl.innerHTML = '';
+    });
+  </script>
+</body>
+</html>
