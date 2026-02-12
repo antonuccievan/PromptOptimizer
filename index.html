@@ -221,6 +221,7 @@
               <option value="creative">Creative Writing</option>
               <option value="marketing">Marketing Copy</option>
               <option value="code">Code / Technical</option>
+              <option value="codex">Codex Development Prompt</option>
               <option value="analysis">Analysis / Strategy</option>
             </select>
           </div>
@@ -236,6 +237,13 @@
             </select>
           </div>
         </div>
+
+        <label for="codexDepth">Codex optimization depth</label>
+        <select id="codexDepth">
+          <option value="standard">Standard</option>
+          <option value="strict">Strict (tests + edge cases)</option>
+          <option value="ship">Ship-ready (implementation + validation + PR checklist)</option>
+        </select>
 
         <label for="constraints">Add constraints (optional)</label>
         <input id="constraints" placeholder="Example: Under 120 words, include 3 bullet points, include CTA." />
@@ -258,6 +266,7 @@
     const rawPromptEl = document.getElementById('rawPrompt');
     const goalEl = document.getElementById('goal');
     const toneEl = document.getElementById('tone');
+    const codexDepthEl = document.getElementById('codexDepth');
     const constraintsEl = document.getElementById('constraints');
     const optimizedPromptEl = document.getElementById('optimizedPrompt');
     const scoreTextEl = document.getElementById('scoreText');
@@ -268,7 +277,14 @@
       creative: 'Make the writing vivid with specific imagery and narrative flow.',
       marketing: 'Focus on audience pain points, value proposition, and a strong CTA.',
       code: 'Provide structured output with assumptions, edge cases, and implementation details.',
+      codex: 'Frame the request with repo context, constraints, validation steps, and expected output artifacts.',
       analysis: 'Break down reasoning step-by-step and include actionable recommendations.'
+    };
+
+    const codexDepthHints = {
+      standard: 'Include a concise implementation plan and summarize changed files.',
+      strict: 'Require automated tests/checks, failure handling, and explicit edge-case coverage.',
+      ship: 'Require a complete delivery workflow: implementation, validation, commit quality, and PR summary.'
     };
 
     function scorePrompt(text, constraints) {
@@ -286,6 +302,7 @@
       const goal = goalEl.value;
       const tone = toneEl.value;
       const constraints = constraintsEl.value.trim();
+      const codexDepth = codexDepthEl.value;
 
       if (!rawPrompt) {
         optimizedPromptEl.textContent = 'Please provide your original prompt first so it can be optimized.';
@@ -294,7 +311,11 @@
         return;
       }
 
-      const optimized = `You are an expert AI assistant.\n\nTask:\n${rawPrompt}\n\nRequirements:\n- Primary goal: ${goal.replace('/', ' & ')}\n- Tone: ${tone}\n- ${goalHints[goal]}${constraints ? `\n- Additional constraints: ${constraints}` : ''}\n\nResponse format:\n1) Brief approach\n2) Final output\n3) Quality check against the requirements\n\nIf key information is missing, ask up to 3 concise clarifying questions before producing the final answer.`;
+      const isCodexGoal = goal === 'codex';
+
+      const optimized = isCodexGoal
+        ? `You are a senior software engineer using Codex to implement a solution.\n\nObjective:\n${rawPrompt}\n\nDevelopment context:\n- Primary goal: Codex Development Prompt\n- Tone: ${tone}\n- Optimization depth: ${codexDepth}\n- Guidance: ${goalHints[goal]}\n- Depth requirements: ${codexDepthHints[codexDepth]}${constraints ? `\n- Additional constraints: ${constraints}` : ''}\n\nExecution instructions:\n1) Restate the task and assumptions in 3-6 bullets.\n2) Provide a minimal implementation plan before coding.\n3) Implement the change with clear, maintainable code and no unrelated edits.\n4) Run relevant tests/checks and report exact commands plus outcomes.\n5) Summarize changed files with what/why for each file.\n6) If blocked, state the blocker and provide the best safe fallback.\n\nOutput format:\n- Plan\n- Implementation\n- Validation\n- Final summary\n\nDo not skip validation. If requirements are ambiguous, ask up to 3 focused clarifying questions.`
+        : `You are an expert AI assistant.\n\nTask:\n${rawPrompt}\n\nRequirements:\n- Primary goal: ${goal.replace('/', ' & ')}\n- Tone: ${tone}\n- ${goalHints[goal]}${constraints ? `\n- Additional constraints: ${constraints}` : ''}\n\nResponse format:\n1) Brief approach\n2) Final output\n3) Quality check against the requirements\n\nIf key information is missing, ask up to 3 concise clarifying questions before producing the final answer.`;
 
       optimizedPromptEl.textContent = optimized;
 
@@ -306,6 +327,11 @@
         'Define constraints such as length, structure, or forbidden content.',
         'Ask for self-checks so the model verifies quality before finalizing.'
       ];
+
+      if (isCodexGoal) {
+        tips.unshift('For Codex tasks, include repository context, definition of done, and required tests.');
+        tips.push('Ask for exact terminal commands and outcomes so implementation quality is auditable.');
+      }
 
       if (score < 70) {
         tips.unshift('Your original prompt is broad. Add more context and a concrete deliverable.');
@@ -321,6 +347,7 @@
       constraintsEl.value = '';
       goalEl.value = 'explain';
       toneEl.value = 'professional';
+      codexDepthEl.value = 'standard';
       optimizedPromptEl.innerHTML = 'Your optimized prompt will appear here after you click <strong>Optimize Prompt</strong>.';
       scoreTextEl.textContent = 'Prompt quality score: —';
       tipsEl.innerHTML = '';
